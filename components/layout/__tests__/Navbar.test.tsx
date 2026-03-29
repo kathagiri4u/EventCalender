@@ -47,4 +47,12 @@ describe('Navbar', () => {
     // Drawer should be open — look for close button
     expect(screen.getByLabelText('Close menu')).toBeInTheDocument()
   })
+
+  it('closes mobile drawer when close button is clicked', () => {
+    render(<Navbar />)
+    fireEvent.click(screen.getByLabelText('Open menu'))
+    expect(screen.getByLabelText('Close menu')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Close menu'))
+    expect(screen.queryByLabelText('Close menu')).not.toBeInTheDocument()
+  })
 })

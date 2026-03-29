@@ -9,6 +9,12 @@ import { SPORT_COLORS, SPORT_DISPLAY_NAMES } from '@/lib/constants'
 import { MajorEventBadge } from '@/components/schedule/MajorEventBadge'
 import type { SportEvent } from '@/types'
 
+export const heroBannerVariants = {
+  enter: (d: number) => ({ x: d > 0 ? '60%' : '-60%', opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (d: number) => ({ x: d > 0 ? '-60%' : '60%', opacity: 0 }),
+}
+
 interface HeroBannerProps {
   events: SportEvent[]
 }
@@ -51,11 +57,7 @@ export function HeroBanner({ events }: HeroBannerProps) {
         <motion.div
           key={event.id}
           custom={direction}
-          variants={{
-            enter: (d: number) => ({ x: d > 0 ? '60%' : '-60%', opacity: 0 }),
-            center: { x: 0, opacity: 1 },
-            exit: (d: number) => ({ x: d > 0 ? '-60%' : '60%', opacity: 0 }),
-          }}
+          variants={heroBannerVariants}
           initial="enter"
           animate="center"
           exit="exit"

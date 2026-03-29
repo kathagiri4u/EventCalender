@@ -114,6 +114,43 @@ describe('filterEvents — this_week date range', () => {
   })
 })
 
+describe('filterEvents — this_month date range', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-28T12:00:00.000Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('includes events within the next 30 days', () => {
+    const events = [
+      makeEvent({ id: '1', date: '2026-03-28T19:30:00.000Z' }), // today
+      makeEvent({ id: '2', date: '2026-04-15T19:30:00.000Z' }), // 18 days later
+      makeEvent({ id: '3', date: '2026-05-10T19:30:00.000Z' }), // 43 days later - outside
+    ]
+    const filters: FilterState = { ...BASE_FILTERS, dateRange: 'this_month' }
+    const result = filterEvents(events, filters)
+    expect(result.map((e) => e.id)).toContain('1')
+    expect(result.map((e) => e.id)).toContain('2')
+    expect(result.map((e) => e.id)).not.toContain('3')
+  })
+})
+
+describe('filterEvents — customDateEnd', () => {
+  it('excludes events after customDateEnd', () => {
+    const events = [
+      makeEvent({ id: '1', date: '2026-03-28T19:30:00.000Z' }),
+      makeEvent({ id: '2', date: '2026-04-10T19:30:00.000Z' }),
+    ]
+    const filters: FilterState = { ...BASE_FILTERS, customDateEnd: '2026-04-01' }
+    const result = filterEvents(events, filters)
+    expect(result.map((e) => e.id)).toContain('1')
+    expect(result.map((e) => e.id)).not.toContain('2')
+  })
+
+})
+
 describe('sortEvents', () => {
   const events = [
     makeEvent({ id: '1', date: '2026-03-29T19:30:00.000Z' }),

@@ -87,4 +87,19 @@ describe('EventList', () => {
     )
     expect(screen.getByText('1 event found')).toBeInTheDocument()
   })
+
+  it('calls onPageChange with previous page on Prev click', () => {
+    const onPageChange = vi.fn()
+    render(
+      <EventList
+        events={[makeEvent('1')]}
+        page={2}
+        totalPages={3}
+        totalItems={75}
+        onPageChange={onPageChange}
+      />
+    )
+    fireEvent.click(screen.getByText('← Prev'))
+    expect(onPageChange).toHaveBeenCalledWith(1)
+  })
 })

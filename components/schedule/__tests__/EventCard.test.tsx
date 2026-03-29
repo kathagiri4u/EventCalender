@@ -74,4 +74,16 @@ describe('EventCard', () => {
     const link = screen.getByRole('link')
     expect(link).toHaveAttribute('href', '/sport/nfl')
   })
+
+  it('renders team logo image when logo is provided', () => {
+    const event = {
+      ...mockEvent,
+      homeTeam: { ...mockEvent.homeTeam, logo: 'https://example.com/sf.png' },
+      awayTeam: { ...mockEvent.awayTeam, logo: 'https://example.com/kc.png' },
+    }
+    render(<EventCard event={event} />)
+    const imgs = screen.getAllByRole('img')
+    expect(imgs.some((img) => img.getAttribute('src') === 'https://example.com/sf.png')).toBe(true)
+    expect(imgs.some((img) => img.getAttribute('src') === 'https://example.com/kc.png')).toBe(true)
+  })
 })

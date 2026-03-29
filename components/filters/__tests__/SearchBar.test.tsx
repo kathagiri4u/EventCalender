@@ -69,4 +69,51 @@ describe('SearchBar (mobile)', () => {
     render(<SearchBar mobile expanded />)
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
   })
+
+  it('dismisses mobile search on Escape key', () => {
+    render(<SearchBar mobile />)
+    fireEvent.click(screen.getByLabelText('Search'))
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByPlaceholderText(/search/i)).not.toBeInTheDocument()
+  })
+
+  it('dismisses mobile search on outside click', () => {
+    render(<SearchBar mobile />)
+    fireEvent.click(screen.getByLabelText('Search'))
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByPlaceholderText(/search/i)).not.toBeInTheDocument()
+  })
+
+  it('calls onClose on form submit when provided', () => {
+    const onClose = vi.fn()
+    render(<SearchBar mobile expanded onClose={onClose} />)
+    const input = screen.getByPlaceholderText(/search/i)
+    fireEvent.change(input, { target: { value: 'test' } })
+    fireEvent.submit(input.closest('form')!)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('handleOutside is no-op when containerRef is null (mobile collapsed)', () => {
+    render(<SearchBar mobile />)
+    // containerRef.current is null when only the icon button renders
+    fireEvent.mouseDown(document.body)
+    expect(screen.getByLabelText('Search')).toBeInTheDocument()
+  })
+
+  it('does not dismiss when clicking inside the search container', () => {
+    render(<SearchBar mobile />)
+    fireEvent.click(screen.getByLabelText('Search'))
+    const input = screen.getByPlaceholderText(/search/i)
+    fireEvent.mouseDown(input) // inside containerRef
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+  })
+
+  it('does not dismiss on non-Escape key', () => {
+    render(<SearchBar mobile />)
+    fireEvent.click(screen.getByLabelText('Search'))
+    fireEvent.keyDown(document, { key: 'Tab' })
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+  })
 })
