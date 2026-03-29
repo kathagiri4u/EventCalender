@@ -38,7 +38,7 @@ export function filterEvents(events: SportEvent[], state: FilterState): SportEve
     } else if (state.dateRange === 'this_month') {
       const { start, end } = getMonthInterval()
       if (!isWithinInterval(ctDate, { start, end })) return false
-    } else if (state.dateRange === 'custom') {
+    } else {
       if (state.customDateStart) {
         const customStart = startOfDay(new Date(state.customDateStart))
         if (ctDate < customStart) return false

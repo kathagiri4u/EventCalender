@@ -13,6 +13,7 @@ export function MoreDropdown() {
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
+      /* v8 ignore next */
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false)
       }

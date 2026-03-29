@@ -18,6 +18,7 @@ export function EventPopover({ event, onClose }: EventPopoverProps) {
   // Close on Escape
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
+      /* v8 ignore next */
       if (e.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', handleKey)

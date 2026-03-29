@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { adaptEspnResponse, getEspnPath } from '../espn'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { adaptEspnResponse, getEspnPath, fetchEspnScoreboard } from '../espn'
 
 const mockResponse = {
   events: [
@@ -93,6 +93,76 @@ describe('adaptEspnResponse', () => {
     const events = adaptEspnResponse(resp, 'nfl', 'NFL')
     expect(events[0].status).toBe('in_progress')
   })
+
+  it('maps cancelled status', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].status.type.name = 'Canceled'
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].status).toBe('cancelled')
+  })
+
+  it('maps postponed status', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].status.type.name = 'Postponed'
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].status).toBe('postponed')
+  })
+
+  it('handles team without logo', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].competitors[0].team.logos = undefined
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].homeTeam.logo).toBe('')
+  })
+
+  it('handles team without record', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].competitors[0].team.records = undefined
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].homeTeam.record).toBeUndefined()
+  })
+
+  it('handles team without color', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].competitors[0].team.color = undefined
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].homeTeam.color).toBeUndefined()
+  })
+
+  it('handles event with network broadcast', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].broadcasts = [{ names: ['ESPN', 'ABC'] }]
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].network).toBe('ESPN, ABC')
+  })
+
+  it('handles event with no broadcasts', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].broadcasts = undefined
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].network).toBeUndefined()
+  })
+
+  it('handles broadcast with empty names array', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].broadcasts = [{ names: [] }]
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].network).toBeUndefined()
+  })
+
+  it('handles status with no name (covers ?? empty string branch)', () => {
+    const resp = JSON.parse(JSON.stringify(mockResponse))
+    resp.events[0].competitions[0].status.type.name = undefined
+    const events = adaptEspnResponse(resp, 'nfl', 'NFL')
+    expect(events[0].status).toBe('scheduled')
+  })
+
+  it('skips events with empty competitions array', () => {
+    const resp = {
+      events: [{ ...mockResponse.events[0], competitions: [] }],
+    }
+    expect(adaptEspnResponse(resp as never, 'nfl', 'NFL')).toEqual([])
+  })
 })
 
 describe('getEspnPath', () => {
@@ -107,5 +177,52 @@ describe('getEspnPath', () => {
   it('returns undefined for sport without a path', () => {
     // All sports have paths in our constants — test the type contract
     expect(typeof getEspnPath('nfl')).toBe('string')
+  })
+})
+
+describe('fetchEspnScoreboard', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns parsed JSON on success', async () => {
+    const mockData = { events: [] }
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    } as Response)
+
+    const result = await fetchEspnScoreboard('football/nfl', '20260328-20260427')
+    expect(result).toEqual(mockData)
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('football%2Fnfl')
+    )
+  })
+
+  it('throws on non-ok response', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+    } as Response)
+
+    await expect(fetchEspnScoreboard('football/nfl', '20260328-20260427')).rejects.toThrow(
+      'ESPN API error 404'
+    )
+  })
+
+  it('uses baseUrl when provided', async () => {
+    const mockData = { events: [] }
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockData),
+    } as Response)
+
+    await fetchEspnScoreboard('football/nfl', '20260328', 'https://example.com')
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('https://example.com')
+    )
   })
 })

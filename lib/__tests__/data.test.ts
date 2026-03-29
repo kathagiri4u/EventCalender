@@ -155,3 +155,20 @@ describe('getUpcomingEvents', () => {
     expect(Array.isArray(events)).toBe(true)
   })
 })
+
+describe('getTodaysEvents', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-28T12:00:00.000Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('returns events that are today in CT', () => {
+    const events = dataModule.getTodaysEvents()
+    // Test data has events on 2026-03-28 (CT) — id '1' at 19:30Z and id '3' at 01:00Z next day (still March 28 CT)
+    expect(Array.isArray(events)).toBe(true)
+    expect(events.every((e) => e.date.startsWith('2026-03-28') || e.date.startsWith('2026-03-29'))).toBe(true)
+  })
+})

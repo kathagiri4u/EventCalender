@@ -76,4 +76,14 @@ describe('StandingsCard', () => {
     render(<StandingsCard sport="nfl" standings={nflStandings} />)
     expect(screen.getByText('KC')).toBeInTheDocument()
   })
+
+  it('renders team logo image when logo is provided', () => {
+    const withLogo = {
+      ...nflStandings,
+      entries: [{ ...nflStandings.entries[0], team: { ...nflStandings.entries[0].team, logo: 'https://example.com/kc.png' } }],
+    }
+    render(<StandingsCard sport="nfl" standings={withLogo} />)
+    const img = screen.getByRole('img', { name: /Kansas City Chiefs/i })
+    expect(img).toHaveAttribute('src', 'https://example.com/kc.png')
+  })
 })
