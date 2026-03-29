@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import { EventPopover } from '../EventPopover'
 import type { SportEvent } from '@/types'
 
-type OnDragEndFn = (e: unknown, info: { offset: { x: number; y: number } }) => void
+type OnDragEndFn = (_e: unknown, _info: { offset: { x: number; y: number } }) => void
 let capturedOnDragEnd: OnDragEndFn | undefined
 
 vi.mock('framer-motion', () => ({
